@@ -7,7 +7,7 @@ import re
 locale.setlocale(locale.LC_ALL, 'C')
 
 @dataclass(frozen=True)
-class InitialPostion:
+class InitialPosition:
     """
     InitialPosition class
     
@@ -49,7 +49,7 @@ class InitialPostion:
             direction = float(values[2]) if 2 < len(values) and values[2] else None
             
             if x is not None or y is not None or direction is not None :
-                return InitialPostion(x, y, direction)
+                return InitialPosition(x, y, direction)
    
         return None
 
@@ -72,6 +72,6 @@ class InitialPostion:
         return ""
 
     def __eq__(self, value: object) -> bool:
-        if isinstance(value, InitialPostion):
+        if isinstance(value, InitialPosition):
             return hash( self ) == hash( value )
         return False

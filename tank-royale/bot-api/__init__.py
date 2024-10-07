@@ -1,1 +1,1 @@
-from .initial_position import InitialPostion
+from .initial_position import InitialPosition
