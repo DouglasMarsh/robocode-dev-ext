@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Self
 import locale
+import re
 
 # Set the locale to the invariant culture
 locale.setlocale(locale.LC_ALL, 'C')
@@ -28,22 +29,30 @@ class InitialPostion:
 
 
     @staticmethod
-    def fromString(initial_position: str) -> Self:
-        initial_position = initial_position or initial_position.strip()
+    def from_string(initial_position: str) -> Self:
+        """ 
+        Constructs an InitialPosition object from a comma delimited string
+        """
+        if initial_position is None:
+            return None
+
+        initial_position = initial_position.strip()
 
         if initial_position:
-            values = [n.strip() for n in initial_position.split(',')]
-            
-            if len(values) < 1: return None
+            values = [n.strip() for n in re.split("\\s*,\\s*|\\s+", initial_position)]
+
+            if not values:
+                return None
 
             x = float(values[0]) if values[0] else None
-            y = float(values[1]) if len(values) >= 2 and values[1] else None
-            dir = float(values[2]) if len(values) >= 3 and values[2] else None
+            y = float(values[1]) if 1 < len(values) and values[1] else None
+            direction = float(values[2]) if 2 < len(values) and values[2] else None
             
-            return InitialPostion(x, y, dir)
-        
+            if x is not None or y is not None or direction is not None :
+                return InitialPostion(x, y, direction)
+   
         return None
-        
+
     def __hash__(self) -> int:
         args = [self.x, self.y, self.direction]
         hash_value = 0
@@ -52,9 +61,17 @@ class InitialPostion:
         return hash_value
 
     def __str__(self) -> str:
-        return f"{self.x:n},{self.y:n},{self.direction:n}"
+        
+        x = f"{self.x:n}" if self.x is not None else ""
+        y = f"{self.y:n}" if self.y is not None else ""
+        d = f"{self.direction:n}" if self.direction is not None else ""
+
+        if x or y or d:
+            return f"{x},{y},{d}"
+        
+        return ""
 
     def __eq__(self, value: object) -> bool:
         if isinstance(value, InitialPostion):
-            return hash( self ) == hash( value )        
+            return hash( self ) == hash( value )
         return False
