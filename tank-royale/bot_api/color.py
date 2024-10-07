@@ -76,6 +76,9 @@ class Color:
             Colors RGB: https://www.w3schools.com/colors/colors_rgb.asp
             Web Colors: https://en.wikipedia.org/wiki/Web_colors
         """
+
+        hex_triplet = hex_triplet.strip()
+        
         if bool(THREE_HEX_DIGITS.search( hex_triplet)):
             return Color.__from_three_hex_digits( hex_triplet )
        
