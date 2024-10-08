@@ -8,6 +8,8 @@ NUMERIC_RGB = re.compile('^#[0-9a-fA-F]{3,6}$')
 THREE_HEX_DIGITS = re.compile('^[0-9a-fA-F]{3}$')
 SIX_HEX_DIGITS = re.compile('^[0-9a-fA-F]{6}$')
 
+# Declaring namedtuple()
+
 @dataclass(frozen=True)
 class Color:
     """
@@ -117,7 +119,7 @@ class Color:
     
     @staticmethod
     def __to_hex(value: int) -> str:
-        return f'{(value >> 4):x}{(value & 0xF):}'
+        return f'{(value >> 4):x}{(value & 0xF):x}'
     
     @staticmethod
     def __from_three_hex_digits(three_hex_digits: str) -> Self:
