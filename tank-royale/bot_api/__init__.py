@@ -1,2 +1,5 @@
-from .initial_position import InitialPosition
+
 from .color import *
+from .util import *
+from .initial_position import *
+from .bot_info import *
