@@ -1,4 +1,4 @@
-"""" Test color module """
+# pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
 from dataclasses import dataclass
 import pytest
@@ -7,15 +7,12 @@ from bot_api import color, Color
 
 @dataclass
 class RGB:
-    """Represent RGB"""
-
     red: int
     green: int
     blue: int
 
 
 class TestColorConstructor:
-    """Test Color init"""
 
     @pytest.mark.parametrize(
         "red,green,blue", [(0x00, 0x00, 0x00), (0xFF, 0xFF, 0xFF), (0x13, 0x9A, 0xF7)]
@@ -23,7 +20,6 @@ class TestColorConstructor:
     def test_given_rgb_when_creating_color_then_created_color_matches_rgb(
         self, red: int, green: int, blue: int
     ):
-        """test creating color from rgb values"""
         c = Color(red, green, blue)
 
         assert c.red == red
@@ -44,13 +40,11 @@ class TestColorConstructor:
     def test_given_invalid_rgb_when_creating_color_then_throw_value_error(
         self, red: int, green: int, blue: int
     ):
-        """test invalid rgb values throw correct error"""
         with pytest.raises(ValueError):
             Color(red, green, blue)
 
 
 class TestColorFromString:
-    """test creating color from rgb string"""
 
     @pytest.mark.parametrize(
         "rgb,red,green,blue",
@@ -127,6 +121,7 @@ class TestColorFromHex:
     @pytest.mark.parametrize(
         "hex_string",
         [
+            ""," ",
             "00000",  # Too short
             "0000000",  # Too long
             "0000 00",  # White space
@@ -182,7 +177,11 @@ class TestColorEquals:
         """test different colors returns not equal"""
         assert Color(rgb1.red, rgb1.green, rgb1.blue) != Color(
             rgb2.red, rgb2.green, rgb2.blue
-        )
+        )    
+    
+    def test_color_is_not_equal_to_none_color_object(self):
+        rgb = RGB(0x11, 0x99, 0xCC)
+        assert Color(rgb.red, rgb.green, rgb.blue) != rgb
 
     @pytest.mark.parametrize(
         "rgb, rgb_str, hex_str",

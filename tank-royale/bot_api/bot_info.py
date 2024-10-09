@@ -152,36 +152,42 @@ class BotInfo:
         )
 
     def __process_country_codes(self):
-        object.__setattr__(
-            self,
-            "country_codes",
-            (
-                [
-                    c.strip().upper()
-                    for c in self.country_codes
-                    if c.strip()
-                    and CntryCodeUtil.is_valid_country_code(c.strip().upper())
-                ]
-                if self.country_codes
-                else [CntryCodeUtil.get_local_country_code()]
-            ),
-        )
+        
+        country_codes = [CntryCodeUtil.get_local_country_code()]
+        if self.country_codes:
+            if len(self.country_codes) > MAX_NUMBER_OF_COUNTRY_CODES:
+                raise ValueError(
+                    f"Size of 'country_codes' exceeds the maximum of {MAX_NUMBER_OF_COUNTRY_CODES}"
+                )
+            
+            country_codes = [
+                c.strip().upper()
+                for c in self.country_codes
+                if c
+                and c.strip()
+                and CntryCodeUtil.is_valid_country_code(c.strip().upper())
+            ]
+        if not country_codes:
+            country_codes = [CntryCodeUtil.get_local_country_code()]
+        object.__setattr__(self, "country_codes", country_codes)
 
     def __process_game_types(self):
 
         if self.game_types and len(self.game_types) > MAX_NUMBER_OF_GAME_TYPES:
             raise ValueError(
-                f"Size of 'gameTypes' exceeds the maximum of {MAX_NUMBER_OF_GAME_TYPES}"
+                f"Size of 'game_types' exceeds the maximum of {MAX_NUMBER_OF_GAME_TYPES}"
             )
 
         game_types = (
-            set([gt for gt in self.game_types if gt.strip()]) if self.game_types else set()
+            set([gt.strip() for gt in self.game_types if gt and gt.strip()])
+            if self.game_types
+            else set()
         )
 
         too_long = [gt for gt in game_types if len(gt) > MAX_GAME_TYPE_LENGTH]
         if too_long:
             raise ValueError(
-                f"GameTypes '{too_long}' length exceeds the maximum of {MAX_GAME_TYPE_LENGTH} characters"
+                f"The following 'game_types' exceed the maximum of {MAX_GAME_TYPE_LENGTH} characters. {too_long}"
             )
 
         object.__setattr__(self, "game_types", game_types)

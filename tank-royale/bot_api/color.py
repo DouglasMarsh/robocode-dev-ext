@@ -74,7 +74,7 @@ class Color:
     @staticmethod
     def from_hex(hex_triplet: str) -> Self:
         """
-        Creates a color from a hex triplet. 
+        Creates a color from a hex triplet.
         A hex triplet is either three or six hexadecimal digits that represents an RGB Color.
         An example of a hex triplet is "09C" or "0099CC", which both represents the same color.
 
@@ -105,15 +105,15 @@ class Color:
     @staticmethod
     def from_string(color: str) -> Self:
         """
-        Creates a color from a string. 
+        Creates a color from a string.
         Currently, only numeric RGB values are supported.
-        This method works the same was as from_hex 
+        This method works the same was as from_hex
         except that is required as hash sign before the hex value.
-        An example of a numeric RGB value is "#09C" or "#0099CC", 
+        An example of a numeric RGB value is "#09C" or "#0099CC",
         which both represents the same color.
 
         Args:
-            color is a string containing either a three or six hexadecimal RGB values 
+            color is a string containing either a three or six hexadecimal RGB values
             like "#09C" or "#0099CC".
 
         Returns:
@@ -125,16 +125,13 @@ class Color:
         """
 
         color = color.strip()
-        if not color:
-            return None
+        if color and bool(NUMERIC_RGB.search(color)):
+            return Color.from_hex(color[1:])
 
-        if not bool(NUMERIC_RGB.search(color)):
-            raise ValueError(
-                'You must supply the string in numeric RGB format #[0-9a-fA-F],'+
-                ' e.g. "#09C" or "#0099CC"'
-            )
-
-        return Color.from_hex(color[1:])
+        raise ValueError(
+            "You must supply the string in numeric RGB format #[0-9a-fA-F],"
+            + ' e.g. "#09C" or "#0099CC"'
+        )
 
     @staticmethod
     def __to_hex(value: int) -> str:

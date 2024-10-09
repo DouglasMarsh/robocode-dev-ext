@@ -14,12 +14,12 @@ class InitialPosition:
     """
     InitialPosition class
 
-    Initial starting position containing a start coordinate (x,y) 
+    Initial starting position containing a start coordinate (x,y)
     and the shared direction of the body, gun, and radar.
 
-    The initial position is only used when debugging to request the server 
+    The initial position is only used when debugging to request the server
     to let a bot start at a specific position.
-    Note that initial starting positions must be enabled at the server-side; 
+    Note that initial starting positions must be enabled at the server-side;
     otherwise the initial starting position is ignored.
 
     Properties:
@@ -44,10 +44,10 @@ class InitialPosition:
         initial_position = initial_position.strip()
 
         if initial_position:
-            values = [n.strip() for n in re.split("\\s*,\\s*|\\s+", initial_position)]
-
-            if not values:
-                return None
+            values = [
+                n.strip()
+                for n in re.split("\\s*,\\s*|\\s+", initial_position)
+            ]
 
             x = float(values[0]) if values[0] else None
             y = float(values[1]) if 1 < len(values) and values[1] else None

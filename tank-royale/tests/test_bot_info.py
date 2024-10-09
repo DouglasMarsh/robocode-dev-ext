@@ -3,7 +3,7 @@
 from platform import python_version
 import pytest
 from bot_api import InitialPosition, bot_info, BotInfo
-
+import re
 
 NAME = "  TestBot  "
 VERSION = "  1.0  "
@@ -11,7 +11,7 @@ AUTHORS = [" Author 1  ", " Author 2 "]
 DESCRIPTION = "  short description "
 HOME_PAGE = " https://testbot.robocode.dev "
 COUNTRY_CODES = [" gb ", "  US "]
-GAME_TYPES = [" classic ", " melee ", " 1v1 "]
+GAME_TYPES = set([" classic ", " melee ", " 1v1 "])
 PLATFORM = " PYTHON 3 "
 PROGRAMMING_LANGUAGE = " PYTHON 3.11 "
 INITIAL_POSITION = InitialPosition.from_string("  10, 20, 30  ")
@@ -55,6 +55,7 @@ class TestBotInfoName:
         ):
             BotInfo(name=name_too_big, version=VERSION, authors=AUTHORS)
 
+
 class TestBotInfoVersion:
     def test_version_is_trimmed(self):
         assert prefilled_bot.version == VERSION.strip()
@@ -78,17 +79,73 @@ class TestBotInfoVersion:
         ):
             BotInfo(name=NAME, version=version_too_big, authors=AUTHORS)
 
+
 class TestBotInfoAuthors:
+    AUTHOR_TOO_LONG = "Test Author".ljust(bot_info.MAX_AUTHOR_LENGTH + 1, "x")
+
     def test_authors_is_trimmed(self):
         trimmed = [a.strip() for a in AUTHORS]
         assert prefilled_bot.authors == trimmed
 
-    @pytest.mark.parametrize("authors",[
-        None, ["",None,""], ["", " ", "\t ", "\n"]
-    ])
+    @pytest.mark.parametrize("authors", [None, ["", None, ""], ["", " ", "\t ", "\n"]])
     def test_none_empty_blanks_raises_error(self, authors):
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="'authors' cannot be null or empty or contain blanks"
+        ):
             BotInfo(name=NAME, version=VERSION, authors=authors)
+
+    def test_single_author_of_maxlength_returns_that_author(self):
+        authors = ["Test Author".ljust(bot_info.MAX_AUTHOR_LENGTH, "x")]
+        b = BotInfo(name=NAME, version=VERSION, authors=authors)
+
+        assert b.authors == authors
+
+    @pytest.mark.parametrize(
+        "authors, rejected",
+        [
+            pytest.param([AUTHOR_TOO_LONG], [AUTHOR_TOO_LONG], id="Single Author"),
+            pytest.param(
+                [AUTHOR_TOO_LONG + "1", AUTHOR_TOO_LONG + "2"],
+                [AUTHOR_TOO_LONG + "1", AUTHOR_TOO_LONG + "2"],
+                id="Multiple Authors",
+            ),
+            pytest.param(
+                [*AUTHORS, AUTHOR_TOO_LONG],
+                [AUTHOR_TOO_LONG],
+                id="Multiple Authors; 1 Too Long",
+            ),
+        ],
+    )
+    def test_author_exceeds_maxlength_raises_error(self, authors, rejected):
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"The following authors exceed the maximum of {bot_info.MAX_AUTHOR_LENGTH} characters. {rejected}"
+            ),
+        ):
+            BotInfo(name=NAME, version=VERSION, authors=authors)
+
+    def test_maximum_number_of_authors_returns_authors(self):
+        authors = [f"Test Author {i}" for i in range(bot_info.MAX_NUMBER_OF_AUTHORS)]
+        b = BotInfo(name=NAME, version=VERSION, authors=authors)
+
+        assert b.authors == authors
+
+    def test_exceed_maximum_number_of_authors_raises_error(self):
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"Size of 'authors' exceeds the maximum of {bot_info.MAX_NUMBER_OF_AUTHORS}"
+            ),
+        ):
+            BotInfo(
+                name=NAME,
+                version=VERSION,
+                authors=[
+                    f"Test Author {i}"
+                    for i in range(bot_info.MAX_NUMBER_OF_AUTHORS + 1)
+                ],
+            )
 
 
 class TestBotInfoDescription:
@@ -127,6 +184,7 @@ class TestBotInfoDescription:
                 description=description_too_big,
             )
 
+
 class TestBotInfoHomepage:
     def test_bot_info_homepage_is_trimmed(self):
         assert prefilled_bot.homepage == HOME_PAGE.strip()
@@ -156,6 +214,93 @@ class TestBotInfoHomepage:
                 name=NAME, version=VERSION, authors=AUTHORS, homepage=homepage_too_big
             )
 
+
+class TestBotInfoCountryCodes:
+    DEFAULT_COUNTRY_CODES = [bot_info.CntryCodeUtil.get_local_country_code()]
+
+    def test_country_codes_are_trimmed_and_ucased(self):
+        trimmed = [a.strip().upper() for a in COUNTRY_CODES]
+        assert prefilled_bot.country_codes == trimmed
+
+    @pytest.mark.parametrize(
+        "codes", [None, [], ["", None, ""], ["", " ", "\t ", "\n"]]
+    )
+    def test_none_empty_blanks_returns_default_country_code(self, codes):
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
+        assert b.country_codes == self.DEFAULT_COUNTRY_CODES
+
+    def test_init_with_valid_list_of_codes_returns_codes(self):
+        codes = ["US", "CA"]
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
+        assert b.country_codes == ["US", "CA"]
+
+    @pytest.mark.parametrize("codes", [ [" ", "U"], ["USA"], ["xx", "UNITED STATES"]])
+    def test_init_with_invalid_list_of_codes_returns_default_country_code(self, codes):
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
+        assert b.country_codes == self.DEFAULT_COUNTRY_CODES
+
+    def test_init_with_max_list_of_codes_returns_codes(self):
+        codes = ["US" for i in range(bot_info.MAX_NUMBER_OF_COUNTRY_CODES)]
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
+        assert b.country_codes == codes
+
+    def test_init_exceed_max_list_of_codes_raises_error(self):
+        codes = ["US" for i in range(bot_info.MAX_NUMBER_OF_COUNTRY_CODES + 1)]
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"Size of 'country_codes' exceeds the maximum of {bot_info.MAX_NUMBER_OF_COUNTRY_CODES}"
+            ),
+        ):
+            BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
+
+
+class TestBotInfoGameTypes:
+    def test_game_types_are_trimmed(self):
+        trimmed = {a.strip() for a in GAME_TYPES}
+        assert prefilled_bot.game_types == trimmed
+
+    @pytest.mark.parametrize(
+        "game_types", [None, set(), set(["", None, ""]), set(["", " ", "\t ", "\n"])]
+    )
+    def test_none_empty_blanks_returns_empty_set(self, game_types):
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, game_types=game_types)
+        assert b.game_types == set()
+
+    def test_game_types_contains_game_type_with_max_length(self):
+        game_types = set(["1v1", "".ljust(bot_info.MAX_GAME_TYPE_LENGTH, "x")])
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, game_types=game_types)
+        assert b.game_types == game_types
+
+    def test_game_types_contains_game_type_exceeding_max_length_raises_error(self):
+        game_types = set(["1v1", "".ljust(bot_info.MAX_GAME_TYPE_LENGTH + 1, "x")])
+        too_long = ["".ljust(bot_info.MAX_GAME_TYPE_LENGTH + 1, "x")]
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"The following 'game_types' exceed the maximum of {bot_info.MAX_GAME_TYPE_LENGTH} characters. {too_long}"
+            ),
+        ):
+            BotInfo(name=NAME, version=VERSION, authors=AUTHORS, game_types=game_types)
+
+    def test_max_number_of_game_types_returns_game_types(self):
+        game_types = set([f"gt{i}" for i in range(bot_info.MAX_NUMBER_OF_GAME_TYPES)])
+        b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, game_types=game_types)
+        assert b.game_types == game_types
+
+    def test_exceed_max_number_of_game_types_raises_error(self):
+        game_types = set(
+            [f"gt{i}" for i in range(bot_info.MAX_NUMBER_OF_GAME_TYPES + 1)]
+        )
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"Size of 'game_types' exceeds the maximum of {bot_info.MAX_NUMBER_OF_GAME_TYPES}"
+            ),
+        ):
+            BotInfo(name=NAME, version=VERSION, authors=AUTHORS, game_types=game_types)
+
+
 class TestBotInfoPlatform:
     def test_bot_info_platform_is_trimmed(self):
         assert prefilled_bot.platform == PLATFORM.strip()
@@ -182,6 +327,7 @@ class TestBotInfoPlatform:
             BotInfo(
                 name=NAME, version=VERSION, authors=AUTHORS, platform=platform_too_big
             )
+
 
 class TestBotInfoProgrammingLang:
     def test_bot_info_programming_lang_is_trimmed(self):
@@ -225,6 +371,7 @@ class TestBotInfoProgrammingLang:
                 programming_lang=programming_lang_too_big,
             )
 
+
 class TestBotInfoInitialPosition:
     def test_initial_position_matches(self):
         assert prefilled_bot.initial_position == INITIAL_POSITION
@@ -235,8 +382,6 @@ class TestBotInfoInitialPosition:
             name=NAME,
             version=VERSION,
             authors=AUTHORS,
-            initial_position=InitialPosition.from_string( initial_position ),
+            initial_position=InitialPosition.from_string(initial_position),
         )
         assert bot.initial_position is None
-
-    

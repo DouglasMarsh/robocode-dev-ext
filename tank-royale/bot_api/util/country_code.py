@@ -261,10 +261,8 @@ def get_local_country_code() -> str:
 def is_valid_country_code(code: str) -> bool:
     """ is provided country code valid """
     code = code.strip() if code else ""
-    if code:
-        return len(code) == 2 and code in __TWO_CHAR_COUNTRY_CODES
+    return len(code) == 2 and code in __TWO_CHAR_COUNTRY_CODES
 
-    return False
 
 __all__ = [
     "get_local_country_code",
