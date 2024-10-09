@@ -1,5 +1,6 @@
 # pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
+import json
 from platform import python_version
 import pytest
 from bot_api import InitialPosition, bot_info, BotInfo
@@ -15,6 +16,7 @@ GAME_TYPES = set([" classic ", " melee ", " 1v1 "])
 PLATFORM = " PYTHON 3 "
 PROGRAMMING_LANGUAGE = " PYTHON 3.11 "
 INITIAL_POSITION = InitialPosition.from_string("  10, 20, 30  ")
+
 
 prefilled_bot = BotInfo(
     name=NAME,
@@ -234,7 +236,7 @@ class TestBotInfoCountryCodes:
         b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
         assert b.country_codes == ["US", "CA"]
 
-    @pytest.mark.parametrize("codes", [ [" ", "U"], ["USA"], ["xx", "UNITED STATES"]])
+    @pytest.mark.parametrize("codes", [[" ", "U"], ["USA"], ["xx", "UNITED STATES"]])
     def test_init_with_invalid_list_of_codes_returns_default_country_code(self, codes):
         b = BotInfo(name=NAME, version=VERSION, authors=AUTHORS, country_codes=codes)
         assert b.country_codes == self.DEFAULT_COUNTRY_CODES
@@ -385,3 +387,69 @@ class TestBotInfoInitialPosition:
             initial_position=InitialPosition.from_string(initial_position),
         )
         assert bot.initial_position is None
+
+
+class TestBotInfoConstructors:
+    minimal_bot_dict = {}
+    minimal_bot_dict["name"] = NAME.strip()
+    minimal_bot_dict["version"] = VERSION.strip()
+    minimal_bot_dict["authors"] = ",".join([c.strip() for c in AUTHORS])
+    minimal_bot = BotInfo(NAME, VERSION, AUTHORS)
+    minimal_bot_str = json.dumps(minimal_bot_dict)
+
+    full_bot_dict = {**minimal_bot_dict}
+    full_bot_dict["description"] = DESCRIPTION.strip()
+    full_bot_dict["homepage"] = HOME_PAGE.strip()
+    full_bot_dict["countryCodes"] = ",".join([c.strip() for c in COUNTRY_CODES])
+    full_bot_dict["gameTypes"] = ",".join([c.strip() for c in GAME_TYPES])
+    full_bot_dict["platform"] = PLATFORM.strip()
+    full_bot_dict["programmingLang"] = PROGRAMMING_LANGUAGE.strip()
+    full_bot_dict["initialPosition"] = str(INITIAL_POSITION)
+    full_bot_str = json.dumps(full_bot_dict)
+
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            pytest.param(minimal_bot_dict, minimal_bot, id="minimal params"),
+            pytest.param(full_bot_dict, prefilled_bot, id="all params"),
+        ],
+    )
+    def test_from_data_dict(self, data: dict, expected: BotInfo):
+        bot = BotInfo.from_data_dict(data)
+        assert bot == expected
+ 
+    @pytest.mark.parametrize(
+        "data",
+        [
+            pytest.param({}, id="empty dictionary"),
+            pytest.param({"version":VERSION, "authors": AUTHORS}, id="missing name"),
+            pytest.param({"name":NAME, "authors": AUTHORS}, id="missing version"),
+            pytest.param({"name":NAME,"version":VERSION}, id="missing authors"),
+        ],
+    )
+    def test_from_data_dict_with_missing_parameters_raises_error(self, data: dict):
+        with pytest.raises(ValueError):
+            BotInfo.from_data_dict(data)
+
+    @pytest.mark.parametrize(
+        "json_str, expected",
+        [
+            pytest.param(minimal_bot_str, minimal_bot, id="minimal params"),
+            pytest.param(full_bot_str, prefilled_bot, id="all params"),
+        ],
+    )
+    def test_from_json(self, json_str: str, expected: BotInfo):
+        bot = BotInfo.from_json(json_str)
+        assert bot == expected
+
+    def test_from_file_with_valid_file_path(self):
+        file_path = "tests/test_data/test_bot.json"
+        bot = BotInfo.from_file(file_path)
+        assert bot.name == NAME.strip()
+        assert bot.version == VERSION.strip()
+
+    def test_from_file_with_invalid_path_raises_error(self):
+        file_path = "/tests/test_data/not_found.json"
+        with pytest.raises(FileNotFoundError):
+            BotInfo.from_file(file_path)
+

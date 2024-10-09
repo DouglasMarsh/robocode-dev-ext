@@ -1,9 +1,12 @@
 """ bot_info module """
 
+import json
+from pathlib import Path
 from platform import python_version
 from dataclasses import dataclass
-from typing import List, Set, Optional
+from typing import List, Self, Set, Optional
 from bot_api import InitialPosition
+
 
 import bot_api.util.country_code as CntryCodeUtil
 
@@ -62,6 +65,173 @@ class BotInfo:
 
     initial_position: Optional[InitialPosition] = None
 
+    @staticmethod
+    def from_data_dict(data: dict) -> Self:
+        """
+        Creates a BotInfo object from a info dictionary
+
+        Args:
+            data (dict): dictionary object containing bot info
+
+        Returns:
+            BotInfo: bot info object constructed from the dict
+
+        Raises:
+            ValueError: If `name`, `version`, or `authors` are missing or blank.
+
+        Example:
+            {
+              "name": "MyBot",
+              "version": "1.0",
+              "authors": "John Doe",
+              "description": "Short description",
+              "homepage": "https://somewhere.net/MyBot",
+              "countryCodes": "us",
+              "gameTypes": "classic, melee, 1v1",
+              "platform": "PYTHON 3.11",
+              "programmingLang": "Python 3.11",
+              "initialPosition": "50,50, 90"
+            }
+
+        Notes:
+            These fields are required as they are used to identify the bot:
+            * name
+            * version
+            * authors
+
+            These field can take comma seperated values:
+            * authors, e.g. "John Doe, Jane Doe"
+            * country_codes, e.g. "US, GB, CA"
+            * game_types, e.g. "classic, melee, 1v1"
+
+            The initial_position variable is optional and should ONLY be use for debugging.
+
+            The game_types variable is optional, but can be used to limit which game types
+            the bot is capable of participating in.
+        """
+
+        if not 'name' in data or not data["name"]:
+            raise ValueError("The required field 'name' is missing or blank")
+        if not 'version' in data or not data["version"]:
+            raise ValueError("The required field 'version' is missing or blank")
+        if not 'authors' in data or not data["authors"]:
+            raise ValueError("The required field 'authors' is missing or blank")
+
+        return BotInfo(
+            name=data.get("name"),
+            version=data.get("version"),
+            authors=list(data.get("authors").split(",")),
+            description=data.get("description", None),
+            homepage=data.get("homepage", None),
+            country_codes=list(data.get("countryCodes", "").split(",")),
+            game_types=set(data.get("gameTypes", "").split(",")),
+            platform=data.get("platform", None),
+            programming_lang=data.get("programmingLang", None),
+            initial_position=InitialPosition.from_string(
+                data.get("initialPosition", "")
+            ),
+        )
+    
+    @staticmethod
+    def from_json(json_str: str) -> Self:
+        """
+        Creates a BotInfo object from a json string
+        The string is assumed to be in JSON format
+
+        Args:
+            json (str): json formatted BotInfo
+
+        Returns:
+            BotInfo: bot info object constructed from the JSON string
+
+        Raises:
+            ValueError: If `name`, `version`, or `authors` are missing or blank.
+
+        Example:
+            {
+              "name": "MyBot",
+              "version": "1.0",
+              "authors": "John Doe",
+              "description": "Short description",
+              "homepage": "https://somewhere.net/MyBot",
+              "countryCodes": "us",
+              "gameTypes": "classic, melee, 1v1",
+              "platform": "PYTHON 3.11",
+              "programmingLang": "Python 3.11",
+              "initialPosition": "50,50, 90"
+            }
+
+        Notes:
+            These fields are required as they are used to identify the bot:
+            * name
+            * version
+            * authors
+
+            These field can take comma seperated values:
+            * authors, e.g. "John Doe, Jane Doe"
+            * country_codes, e.g. "US, GB, CA"
+            * game_types, e.g. "classic, melee, 1v1"
+
+            The initial_position variable is optional and should ONLY be use for debugging.
+
+            The game_types variable is optional, but can be used to limit which game types
+            the bot is capable of participating in.
+        """
+
+        data: dict = json.loads(json_str)
+        return BotInfo.from_data_dict( data )
+        
+    @staticmethod
+    def from_file(file_path: str) -> Self:
+        """
+        Creates a BotInfo object from a json file
+        The file is assumed to be in JSON format
+
+        Args:
+            file_path (str): path to json formatted info file
+
+        Returns:
+            BotInfo: bot info object constructed from the JSON file
+
+        Raises:
+            FileNotFoundError: If json file is not found
+            ValueError: If `name`, `version`, or `authors` are missing or blank.
+
+        Example:
+            {
+              "name": "MyBot",
+              "version": "1.0",
+              "authors": "John Doe",
+              "description": "Short description",
+              "homepage": "https://somewhere.net/MyBot",
+              "countryCodes": "us",
+              "gameTypes": "classic, melee, 1v1",
+              "platform": "PYTHON 3.11",
+              "programmingLang": "Python 3.11",
+              "initialPosition": "50,50, 90"
+            }
+
+        Notes:
+            These fields are required as they are used to identify the bot:
+            * name
+            * version
+            * authors
+
+            These field can take comma seperated values:
+            * authors, e.g. "John Doe, Jane Doe"
+            * country_codes, e.g. "US, GB, CA"
+            * game_types, e.g. "classic, melee, 1v1"
+
+            The initial_position variable is optional and should ONLY be use for debugging.
+
+            The game_types variable is optional, but can be used to limit which game types
+            the bot is capable of participating in.
+        """
+        json_content = Path.cwd().joinpath( file_path ).read_text(encoding="utf-8")
+        data = json.loads(json_content)
+        return BotInfo.from_data_dict( data )
+
+    
     def __post_init__(self):
         self.__process_name()
         self.__process_version()
@@ -152,14 +322,14 @@ class BotInfo:
         )
 
     def __process_country_codes(self):
-        
+
         country_codes = [CntryCodeUtil.get_local_country_code()]
         if self.country_codes:
             if len(self.country_codes) > MAX_NUMBER_OF_COUNTRY_CODES:
                 raise ValueError(
                     f"Size of 'country_codes' exceeds the maximum of {MAX_NUMBER_OF_COUNTRY_CODES}"
                 )
-            
+
             country_codes = [
                 c.strip().upper()
                 for c in self.country_codes
