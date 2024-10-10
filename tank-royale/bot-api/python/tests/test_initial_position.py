@@ -1,7 +1,7 @@
 # pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
 import pytest
-from bot_api import InitialPosition
+from robocode.tankroyale.botapi import InitialPosition
 
 
 @pytest.mark.parametrize(

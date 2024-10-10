@@ -1,3 +1,4 @@
+""" robocode.tankroyal.botapi.bot_results """
 
 from dataclasses import dataclass
 

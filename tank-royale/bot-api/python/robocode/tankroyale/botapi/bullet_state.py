@@ -1,8 +1,13 @@
+""" robocode.tankroyal.botapi.bullet_state"""
+
 from dataclasses import dataclass, field
 from .color import Color
 
 @dataclass(frozen=True)
 class BulletState:
+    """
+    State of a Bullet
+    """
     bullet_id: int
     owner_id: int
     power: float

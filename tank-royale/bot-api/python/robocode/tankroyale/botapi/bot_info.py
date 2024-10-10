@@ -1,14 +1,14 @@
-""" bot_info module """
+""" robocode.tankroyal.botapi.bot_info """
 
 import json
 from pathlib import Path
 from platform import python_version
 from dataclasses import dataclass
 from typing import List, Self, Set, Optional
-from bot_api import InitialPosition
 
+import robocode.tankroyale.botapi.util.country_code as CntryCodeUtil
+from robocode.tankroyale.botapi.initial_position import InitialPosition
 
-import bot_api.util.country_code as CntryCodeUtil
 
 MAX_NAME_LENGTH: int = 30
 """Maximum number of characters accepted for the name."""

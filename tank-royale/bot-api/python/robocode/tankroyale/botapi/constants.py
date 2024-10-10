@@ -1,3 +1,4 @@
+""" BotApi Constants"""
 
 BOUNDING_CIRCLE_RADIUS: int = 18
 """

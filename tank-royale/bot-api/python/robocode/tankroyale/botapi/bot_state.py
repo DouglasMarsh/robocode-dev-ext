@@ -1,3 +1,5 @@
+""" robocode.tankroyal.botapi.bot_state """
+
 from dataclasses import dataclass
 from .color import Color
 

@@ -1,10 +1,11 @@
 # pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
 import json
-from platform import python_version
-import pytest
-from bot_api import InitialPosition, bot_info, BotInfo
 import re
+from platform import python_version
+
+import pytest
+from robocode.tankroyale.botapi import BotInfo, InitialPosition, bot_info
 
 NAME = "  TestBot  "
 VERSION = "  1.0  "
@@ -417,14 +418,14 @@ class TestBotInfoConstructors:
     def test_from_data_dict(self, data: dict, expected: BotInfo):
         bot = BotInfo.from_data_dict(data)
         assert bot == expected
- 
+
     @pytest.mark.parametrize(
         "data",
         [
             pytest.param({}, id="empty dictionary"),
-            pytest.param({"version":VERSION, "authors": AUTHORS}, id="missing name"),
-            pytest.param({"name":NAME, "authors": AUTHORS}, id="missing version"),
-            pytest.param({"name":NAME,"version":VERSION}, id="missing authors"),
+            pytest.param({"version": VERSION, "authors": AUTHORS}, id="missing name"),
+            pytest.param({"name": NAME, "authors": AUTHORS}, id="missing version"),
+            pytest.param({"name": NAME, "version": VERSION}, id="missing authors"),
         ],
     )
     def test_from_data_dict_with_missing_parameters_raises_error(self, data: dict):
@@ -443,13 +444,12 @@ class TestBotInfoConstructors:
         assert bot == expected
 
     def test_from_file_with_valid_file_path(self):
-        file_path = "tests/test_data/test_bot.json"
+        file_path = "bot-api/python/tests/test_data/test_bot.json"
         bot = BotInfo.from_file(file_path)
         assert bot.name == NAME.strip()
         assert bot.version == VERSION.strip()
 
     def test_from_file_with_invalid_path_raises_error(self):
-        file_path = "/tests/test_data/not_found.json"
+        file_path = "bot-api/python/tests/test_data/not_found.json"
         with pytest.raises(FileNotFoundError):
             BotInfo.from_file(file_path)
-

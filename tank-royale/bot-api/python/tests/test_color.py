@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import pytest
-from bot_api import color, Color
+from robocode.tankroyale.botapi import color, Color
 
 
 @dataclass
